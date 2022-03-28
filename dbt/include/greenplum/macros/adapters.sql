@@ -1,6 +1,13 @@
 {% macro greenplum__create_table_as(temporary, relation, sql) -%}
   {%- set unlogged = config.get('unlogged', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
+  {%- set distributed_replicated = config.get('distributed_replicated', false) -%}
+  {%- set distributed_by = config.get('distributed_by', none) -%}
+  {%- set appendonly = config.get('appendonly', 'true') -%}
+  {%- set orientation = config.get('orientation', 'column') -%}
+  {%- set compresstype = config.get('compresstype', 'ZLIB') -%}
+  {%- set compresslevel = config.get('compresslevel', 1) -%}
+  {%- set blocksize = config.get('blocksize', 32768) -%}
 
   {{ sql_header if sql_header is not none }}
 
@@ -9,9 +16,24 @@
   {%- elif unlogged -%}
     unlogged
   {%- endif %} table {{ relation }}
+  with (
+        appendonly={{ appendonly }},
+        blocksize={{ blocksize }},
+        orientation={{ orientation }},
+        compresstype={{ compresstype }},
+        compresslevel={{ compresslevel }}
+  )
   as (
     {{ sql }}
-  );
+  )
+  {% if distributed_by is not none %}
+  DISTRIBUTED BY ({{ distributed_by }})
+  {% elif distributed_replicated %}
+  DISTRIBUTED REPLICATED
+  {% else %}
+  DISTRIBUTED RANDOMLY
+  {% endif %}
+  ;
 {%- endmacro %}
 
 {% macro greenplum__get_create_index_sql(relation, index_dict) -%}
