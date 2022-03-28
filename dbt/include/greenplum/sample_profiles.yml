@@ -1,0 +1,11 @@
+
+default:
+  outputs:
+    dev:
+      type: greenplum
+      # Add sample credentials here, like:
+      # host: <host>
+      # port: <port_num>
+      # username: <user>
+      # password: <pass>
+  target: dev
