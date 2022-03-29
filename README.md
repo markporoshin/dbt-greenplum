@@ -35,12 +35,13 @@ You can specify following preference
    ``` 
     You can also specify `blocksize`, `compresstype`, `compresslevel` in the model config
  - appendonly preference by default is `true`, also you can override it by setting up `appendonly` field in the model config
+ - partitions (see "partition" chapter below)
 
 ### Example
 
 Such model definition
 
-```
+```buildoutcfg
 {{
     config(
         materialized='table',
@@ -67,7 +68,7 @@ from source_data
 
 will produce following sql code
 
-```
+```buildoutcfg
 create  table "dvault"."dv"."my_first_dbt_model__dbt_tmp"
 with (
     appendonly=true,
@@ -90,6 +91,211 @@ distributed by (id);
   
 alter table "dvault"."dv"."my_first_dbt_model__dbt_tmp" rename to "my_first_dbt_model";
 ```
+
+### Partitions
+
+Greenplum does not support partitions with `create table as` [construction](https://gpdb.docs.pivotal.io/6-9/ref_guide/sql_commands/CREATE_TABLE_AS.html), so you need to build model in two steps
+ - create table schema
+ - insert data
+
+To implement partitions into you dbt-model you need to specify following config parameters:
+ - `fields_string` - definition of columns name, type and constraints
+ - one of following way to configure partitions
+   - `raw_partition` by default
+   - `partition_type`, `partition_column`, `partition_spec`
+   - `partition_type`, `partition_column`, `partition_start`, `partition_end`, `partition_every`
+   - `partition_type`, `partition_column`, `partition_values`
+ - `default_partition_name` - name of default partition 'other' by default
+
+Let consider examples of definition model with partitions
+
+ - using `raw_partition` parameter
+   ```buildoutcfg
+   {% set fields_string %}
+        id int4 null,
+        incomingdate timestamp NULL
+   {% endset %}
+
+
+   {% set raw_partition %}
+       PARTITION BY RANGE (incomingdate)
+       (
+           START ('2021-01-01'::timestamp) INCLUSIVE
+           END ('2023-01-01'::timestamp) EXCLUSIVE
+           EVERY (INTERVAL '1 day'),
+           DEFAULT PARTITION extra
+       );
+   {% endset %}
+
+   {{
+       config(
+           materialized='table',
+           distributed_by='id',
+           appendonly='true',
+           orientation='column',
+           compresstype='ZLIB',
+           compresslevel=1,
+           blocksize=32768,
+           fields_string=fields_string,
+           raw_partition=raw_partition,
+           default_partition_name='other_data'
+       )
+   }}
+   
+   with source_data as (
+   
+       select
+           1 as id,
+           '2022-02-22'::timestamp as incomingdate
+       union all
+       select
+           null as id,
+           '2022-02-25'::timestamp as incomingdate
+   )
+   select *
+   from source_data
+   ```
+   will produce following sql code
+   ```buildoutcfg
+   create table if not exists "database"."schema"."my_first_dbt_model__dbt_tmp" (
+       id int4 null,
+       incomingdate timestamp NULL
+   )
+   with (
+       appendonly=true,
+       blocksize=32768,
+       orientation=column,
+       compresstype=ZLIB,
+       compresslevel=1
+   )
+   DISTRIBUTED BY (id)
+   PARTITION BY RANGE (incomingdate)
+   (
+       START ('2021-01-01'::timestamp) INCLUSIVE
+       END ('2023-01-01'::timestamp) EXCLUSIVE
+       EVERY (INTERVAL '1 day'),
+       DEFAULT PARTITION extra
+   );
+   
+   insert into "database"."schema"."my_first_dbt_model__dbt_tmp" (
+       with source_data as (
+   
+           select
+               1 as id,
+               '2022-02-22'::timestamp as incomingdate
+           union all
+           select
+               null as id,
+               '2022-02-25'::timestamp as incomingdate
+       )
+       select *
+       from source_data
+   );
+   alter table "dvault"."dv"."my_first_dbt_model" rename to "my_first_dbt_model__dbt_backup";
+   drop table if exists "dvault"."dv"."my_first_dbt_model__dbt_backup" cascade;
+   alter table "database"."schema"."my_first_dbt_model__dbt_tmp" rename to "my_first_dbt_model";
+   ```
+ - Same result you can get using `partition_type`, `partition_column`, `partition_spec` parameters
+   ```buildoutcfg
+   {% set fields_string %}
+       id int4 null,
+       incomingdate timestamp NULL
+   {% endset %}
+
+   {%- set partition_type = 'RANGE' -%}
+   {%- set partition_column = 'incomingdate' -%}
+   {% set partition_spec %}
+       START ('2021-01-01'::timestamp) INCLUSIVE
+       END ('2023-01-01'::timestamp) EXCLUSIVE
+       EVERY (INTERVAL '1 day'),
+       DEFAULT PARTITION extra
+   {% endset %}
+   
+   {{
+       config(
+           materialized='table',
+           distributed_by='id',
+           appendonly='true',
+           orientation='column',
+           compresstype='ZLIB',
+           compresslevel=1,
+           blocksize=32768,
+           fields_string=fields_string,
+           partition_type=partition_type,
+           partition_column=partition_column,
+           partition_spec=partition_spec,
+           default_partition_name='other_data'
+       )
+   }}
+   
+   with source_data as (
+   
+       select
+           1 as id,
+           '2022-02-22'::timestamp as incomingdate
+       union all
+       select
+           null as id,
+           '2022-02-25'::timestamp as incomingdate
+   )
+   select *
+   from source_data
+   ```
+ - also you can use third way
+   ```buildoutcfg
+   {% set fields_string %}
+       id int4 null,
+       incomingdate timestamp NULL
+   {% endset %}
+   
+   
+   {%- set partition_type = 'RANGE' -%}
+   {%- set partition_column = 'incomingdate' -%}
+   {%- set partition_start = "'2021-01-01'::timestamp" -%}
+   {%- set partition_end = "'2022-01-01'::timestamp" -%}
+   {%- set partition_every = '1 day' -%}
+   
+   
+   {{
+       config(
+           materialized='table',
+           distributed_by='id',
+           appendonly='true',
+           orientation='column',
+           compresstype='ZLIB',
+           compresslevel=1,
+           blocksize=32768,
+           fields_string=fields_string,
+           partition_type=partition_type,
+           partition_column=partition_column,
+           partition_start=partition_start,
+           partition_end=partition_end,
+           partition_every=partition_every,
+           default_partition_name='other_data'
+       )
+   }}
+   
+   with source_data as (
+   
+       select
+           1 as id,
+           '2022-02-22'::timestamp as incomingdate
+       union all
+       select
+           null as id,
+           '2022-02-25'::timestamp as incomingdate
+   )
+   select *
+   from source_data
+   ```
+ - example of partition_type `LIST` coming soon
+
+#### Table partition hint
+
+Too check generate sql script use `-d` option:
+`dbt -d run <...> -m <models>`
+
+If you want complex partition logic with subpartition or something else use `raw_partition` parameter
 
 ## Getting started
 
