@@ -18,6 +18,16 @@ dbt is the T in ELT. Organize, cleanse, denormalize, filter, rename, and pre-agg
 
 The `dbt-greenplum` package contains the code enabling dbt to work with Greenplum. This adapter based on [postgres-adapter](https://github.com/dbt-labs/dbt-core/blob/main/plugins/postgres/dbt/include/postgres/profile_template.yml) with a bit difference for a greenplum specific features
 
+## Installation
+
+Easiest way to start use dbt-greenplum is to install it using pip
+`pip install dbt-greenplum==<version>`
+
+Where `<version>` is same as your dbt version
+
+Available versions:
+ - 0.19.2 for dbt version 0.19.*
+
 ## Supported Features
 
 You can specify following preference 
@@ -241,7 +251,7 @@ Let consider examples of definition model with partitions
    select *
    from source_data
    ```
- - also you can use third way
+ - also, you can use third way
    ```buildoutcfg
    {% set fields_string %}
        id int4 null,
@@ -288,14 +298,14 @@ Let consider examples of definition model with partitions
    select *
    from source_data
    ```
- - example of partition_type `LIST` coming soon
+ - example of partition_type `LIST` is coming soon
 
-#### Table partition hint
+#### Table partition hints
 
 Too check generate sql script use `-d` option:
 `dbt -d run <...> -m <models>`
 
-If you want complex partition logic with subpartition or something else use `raw_partition` parameter
+If you want implement complex partition logic with subpartition or something else use `raw_partition` parameter
 
 ## Getting started
 
@@ -309,7 +319,7 @@ If you want complex partition logic with subpartition or something else use `raw
 
 ## Reporting bugs and contributing code
 
-- Want to report a bug or request a feature? Let us know on [Slack](http://community.getdbt.com/), or open [an issue](https://github.com/dbt-labs/dbt-redshift/issues/new)
+- Want to report a bug or request a feature? Let us know on [Slack](http://community.getdbt.com/), or open [an issue](https://github.com/markporoshin/dbt-greenplum/issues/new)
 - Want to help us build dbt? Check out the [Contributing Guide](https://github.com/dbt-labs/dbt/blob/HEAD/CONTRIBUTING.md)
 
 ## Code of Conduct
