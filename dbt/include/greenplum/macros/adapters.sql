@@ -1,18 +1,18 @@
 {% macro greenplum__create_table_as(temporary, relation, sql) -%}
   {%- set unlogged = config.get('unlogged', default=false) -%}
   {%- set sql_header = config.get('sql_header', none) -%}
-  {%- set distributed_replicated = config.get('distributed_replicated', false) -%}
+  {%- set distributed_replicated = config.get('distributed_replicated', default=false) -%}
   {%- set distributed_by = config.get('distributed_by', none) -%}
-  {%- set appendonly = config.get('appendonly', 'true') -%}
-  {%- set orientation = config.get('orientation', 'column') -%}
-  {%- set compresstype = config.get('compresstype', 'ZLIB') -%}
-  {%- set compresslevel = config.get('compresslevel', 1) -%}
-  {%- set blocksize = config.get('blocksize', 32768) -%}
+  {%- set appendonly = config.get('appendonly', default='true') -%}
+  {%- set orientation = config.get('orientation', default='column') -%}
+  {%- set compresstype = config.get('compresstype', default='ZLIB') -%}
+  {%- set compresslevel = config.get('compresslevel', default=1) -%}
+  {%- set blocksize = config.get('blocksize', default=32768) -%}
 
   {%- set raw_partition = config.get('raw_partition', none) -%}
   {%- set fields_string = config.get('fields_string', none) -%}
 
-  {%- set default_partition_name = config.get('default_partition_name', 'other') -%}
+  {%- set default_partition_name = config.get('default_partition_name', default='other') -%}
   {%- set partition_type = config.get('partition_type', none) -%}
   {%- set partition_column = config.get('partition_column', none) -%}
 
