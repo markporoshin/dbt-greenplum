@@ -30,8 +30,8 @@ You can specify following preference
  - compress type, level and blocksize with default values
    ```bash
     blocksize=32768,
-    compresstype=ZLIB,
-    compresslevel=1
+    compresstype=ZSTD,
+    compresslevel=4
    ``` 
     You can also specify `blocksize`, `compresstype`, `compresslevel` in the model config
  - appendonly preference by default is `true`, also you can override it by setting up `appendonly` field in the model config
