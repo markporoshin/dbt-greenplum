@@ -27,7 +27,7 @@
 
   {{ sql_header if sql_header is not none }}
 
-  {% if is_partition %}
+  {% if is_partition and not temporary %}
 
     {# CREATING TABLE #}
     create table if not exists {{ relation }} (
@@ -120,6 +120,21 @@
     using {{ index_config.type }}
   {%- endif %}
   ({{ comma_separated_columns }});
+{%- endmacro %}
+
+{% macro greenplum__generate_schema_name(custom_schema_name, node) -%}
+
+    {%- set default_schema = target.schema -%}
+    {%- if custom_schema_name is none -%}
+
+    {{ default_schema }}
+
+    {%- else -%}
+
+    {{ custom_schema_name | trim }}
+
+    {%- endif -%}
+
 {%- endmacro %}
 
 {% macro greenplum__create_schema(relation) -%}
