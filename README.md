@@ -27,6 +27,7 @@ Where `<version>` is same as your dbt version
 
 Available versions:
  - 0.19.2 for dbt version 0.19.*
+ - 1.0.4 for dbt version 1.0.4
 
 ## Supported Features
 
@@ -108,7 +109,7 @@ Greenplum does not support partitions with `create table as` [construction](http
  - create table schema
  - insert data
 
-To implement partitions into you dbt-model you need to specify following config parameters:
+To implement partitions into you dbt-model you need to specify on of the following config parameters:
  - `fields_string` - definition of columns name, type and constraints
  - one of following way to configure partitions
    - `raw_partition` by default
