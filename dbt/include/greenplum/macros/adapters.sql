@@ -27,7 +27,7 @@
 
   {{ sql_header if sql_header is not none }}
 
-  {% if is_partition %}
+  {% if is_partition and not temporary %}
 
     {# CREATING TABLE #}
     create table if not exists {{ relation }} (
