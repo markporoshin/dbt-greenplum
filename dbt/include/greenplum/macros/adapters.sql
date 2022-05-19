@@ -5,8 +5,8 @@
   {%- set distributed_by = config.get('distributed_by', none) -%}
   {%- set appendonly = config.get('appendonly', default='true') -%}
   {%- set orientation = config.get('orientation', default='column') -%}
-  {%- set compresstype = config.get('compresstype', default='ZLIB') -%}
-  {%- set compresslevel = config.get('compresslevel', default=1) -%}
+  {%- set compresstype = config.get('compresstype', default='ZSTD') -%}
+  {%- set compresslevel = config.get('compresslevel', default=4) -%}
   {%- set blocksize = config.get('blocksize', default=32768) -%}
 
   {%- set raw_partition = config.get('raw_partition', none) -%}
