@@ -2,7 +2,7 @@
 from setuptools import find_namespace_packages, setup
 
 package_name = "dbt-greenplum"
-package_version = "1.0.4"
+package_version = "1.0.4.1"
 description = """The greenplum adapter plugin for dbt"""
 
 setup(
