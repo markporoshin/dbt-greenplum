@@ -8,6 +8,8 @@ from dbt.adapters.greenplum import GreenplumConnectionManager
 from dbt.adapters.greenplum.relation import GreenplumColumn
 from dbt.adapters.greenplum.relation import GreenplumRelation
 from dbt.dataclass_schema import dbtClassMixin, ValidationError
+from dbt.semver import VersionSpecifier
+from dbt.version import get_installed_version
 import dbt.exceptions
 import dbt.utils
 
@@ -126,8 +128,13 @@ class GreenplumAdapter(SQLAdapter):
 
         self._link_cached_database_relations(schemas)
 
-    def _relations_cache_for_schemas(self, manifest):
-        super()._relations_cache_for_schemas(manifest)
+    def _relations_cache_for_schemas(self, manifest, cache_schemas = None):
+        installed_version = get_installed_version()
+        required_version = VersionSpecifier.from_version_string('1.1.0')
+        if installed_version.compare(required_version) >= 0:
+            super()._relations_cache_for_schemas(manifest, cache_schemas)
+        else:
+            super()._relations_cache_for_schemas(manifest)
         self._link_cached_relations(manifest)
 
     def timestamp_add_sql(self, add_to: str, number: int = 1, interval: str = "hour") -> str:
