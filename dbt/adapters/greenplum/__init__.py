@@ -9,4 +9,6 @@ from dbt.include import greenplum
 Plugin = AdapterPlugin(
     adapter=GreenplumAdapter,
     credentials=GreenplumCredentials,
-    include_path=greenplum.PACKAGE_PATH)
+    include_path=greenplum.PACKAGE_PATH,
+    dependencies=['postgres']
+)
