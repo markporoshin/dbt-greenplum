@@ -35,7 +35,9 @@
     )
     with (
         appendonly={{ appendonly }},
-        blocksize={{ blocksize }},
+        {% if appendonly != 'true' %}
+            blocksize={{ blocksize }},
+        {% endif %}
         orientation={{ orientation }},
         compresstype={{ compresstype }},
         compresslevel={{ compresslevel }}
