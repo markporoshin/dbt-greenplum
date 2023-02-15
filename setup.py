@@ -98,7 +98,7 @@ setup(
         ]
     },
     install_requires=[
-        "dbt-core~={}".format(dbt_core_version),
+        "dbt-core=={}".format(dbt_core_version),
         "dbt-postgres=={}".format(package_version),
         "{}~=2.8".format(DBT_PSYCOPG2_NAME),
     ],
@@ -113,6 +113,7 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
     ],
     python_requires=">=3.7",
 )
