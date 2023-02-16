@@ -3,11 +3,14 @@
   {%- set sql_header = config.get('sql_header', none) -%}
   {%- set distributed_replicated = config.get('distributed_replicated', default=false) -%}
   {%- set distributed_by = config.get('distributed_by', none) -%}
-  {%- set appendonly = config.get('appendonly', default='true') -%}
+  {%- set appendonly = config.get('appendonly', default=true) -%}
+  {%- set appendoptimized = config.get('appendoptimized', default=appendonly) -%}
   {%- set orientation = config.get('orientation', default='column') -%}
   {%- set compresstype = config.get('compresstype', default='ZSTD') -%}
   {%- set compresslevel = config.get('compresslevel', default=4) -%}
   {%- set blocksize = config.get('blocksize', default=32768) -%}
+
+  {% set partition_spec = config.get('partition_spec', none) %}
 
   {%- set raw_partition = config.get('raw_partition', none) -%}
   {%- set fields_string = config.get('fields_string', none) -%}
@@ -15,9 +18,6 @@
   {%- set default_partition_name = config.get('default_partition_name', default='other') -%}
   {%- set partition_type = config.get('partition_type', none) -%}
   {%- set partition_column = config.get('partition_column', none) -%}
-
-  {% set partition_spec = config.get('partition_spec', none) %}
-
   {%- set partition_start = config.get('partition_start', none) -%}
   {%- set partition_end = config.get('partition_end', none) -%}
   {%- set partition_every = config.get('partition_every', none) -%}
@@ -33,50 +33,14 @@
     create table if not exists {{ relation }} (
         {{ fields_string }}
     )
-    with (
-        appendonly={{ appendonly }},
-        {% if appendonly != 'true' %}
-            blocksize={{ blocksize }},
-        {% endif %}
-        orientation={{ orientation }},
-        compresstype={{ compresstype }},
-        compresslevel={{ compresslevel }}
-    )
-    {% if distributed_by is not none %}
-    DISTRIBUTED BY ({{ distributed_by }})
-    {% elif distributed_replicated %}
-    DISTRIBUTED REPLICATED
-    {% else %}
-    DISTRIBUTED RANDOMLY
-    {% endif %}
-
-
-    {% if is_partition %}
-        {% if raw_partition is not none %}
-            {{ raw_partition }}
-        {% else %}
-            PARTITION BY {{ partition_type }} ({{ partition_column }})
-            (
-                {% if partition_spec is not none %}
-                    {{ partition_spec }}
-                {% else %}
-                    {% if partition_type == 'LIST' %}
-                        {{ partition_values }},
-                        DEFAULT PARTITION {{ default_partition_name }}
-                    {% else %}
-                        START ({{ partition_start }}) INCLUSIVE
-                        END ({{ partition_end }}) EXCLUSIVE
-                        EVERY (INTERVAL '{{ partition_every }}'),
-                        DEFAULT PARTITION {{ default_partition_name }}
-                    {% endif %}
-
-                {% endif %}
-            )
-        {% endif %}
-    {% endif %}
+    {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+    {{ distribution(distributed_by, distributed_replicated) }}
+    {{ partitions(raw_partition, partition_type, partition_column,
+                  default_partition_name, partition_start, partition_end,
+                  partition_every, partition_values) }}
     ;
 
-    {# INSERT DATA #}
+    {# INSERTING DATA #}
     insert into {{ relation }} (
         {{ sql }}
     );
@@ -88,30 +52,20 @@
       {%- elif unlogged -%}
         unlogged
       {%- endif %} table {{ relation }}
-      with (
-            appendonly={{ appendonly }},
-            blocksize={{ blocksize }},
-            orientation={{ orientation }},
-            compresstype={{ compresstype }},
-            compresslevel={{ compresslevel }}
-      )
+      {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
       as (
         {{ sql }}
       )
-      {% if distributed_by is not none %}
-      DISTRIBUTED BY ({{ distributed_by }})
-      {% elif distributed_replicated %}
-      DISTRIBUTED REPLICATED
-      {% else %}
-      DISTRIBUTED RANDOMLY
-      {% endif %}
+      {{ distribution(distributed_by, distributed_replicated) }}
       ;
   {% endif %}
 {%- endmacro %}
 
+
 {% macro greenplum__get_create_index_sql(relation, index_dict) -%}
   {{ return(postgres__get_create_index_sql(relation, index_dict)) }}
 {%- endmacro %}
+
 
 {% macro greenplum__generate_schema_name(custom_schema_name, node) -%}
 
@@ -128,13 +82,16 @@
 
 {%- endmacro %}
 
+
 {% macro greenplum__create_schema(relation) -%}
   {{ return(postgres__create_schema(relation)) }}
 {% endmacro %}
 
+
 {% macro greenplum__drop_schema(relation) -%}
   {{ return(postgres__drop_schema(relation)) }}
 {% endmacro %}
+
 
 {% macro greenplum__get_columns_in_relation(relation) -%}
   {{ return(postgres__get_columns_in_relation(relation)) }}
@@ -145,9 +102,12 @@
   {{ return(postgres__list_relations_without_caching(relation)) }}
 {%- endmacro %}
 
+
 {% macro greenplum__list_schemas(database) %}
   {{ return(postgres__list_schemas(database)) }}
+
 {% endmacro %}
+
 
 {% macro greenplum__check_schema_exists(information_schema, schema) -%}
   {{ return(postgres__check_schema_exists(information_schema, schema)) }}
