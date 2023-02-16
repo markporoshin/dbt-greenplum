@@ -32,6 +32,9 @@ Available versions:
 ## Supported Features
 
 You can specify following preference 
+ - starage type
+   - heap
+   - appendoptimized
  - distribution
    - `distributed randomly` by defaut
    - `distributed by (column, [ ... ] )` by setting up `distributed_by` parameter in the model config
@@ -45,19 +48,46 @@ You can specify following preference
     compresslevel=1
    ``` 
     You can also specify `blocksize`, `compresstype`, `compresslevel` in the model config
- - appendonly preference by default is `true`, also you can override it by setting up `appendonly` field in the model config
+ - appendonly|appendoptimized preference by default is `true`, also you can override it by setting up `appendoptimized` field in the model config
  - partitions (see "partition" chapter below)
 
-### Example
+### Heap table example
 
+```SQL
+{{
+   config(
+      ...
+      materialized='table',
+      appendoptimized='false'
+      ...
+   )
+}}
+
+select 1 as "id"
+```
+
+will produce following SQL code
+
+```SQL
+create  table "<db_name>"."<schema_name>"."<table_name>"
+with (
+   appendoptimized=false
+) as (
+   select 1 as "id"
+)
+DISTRIBUTED RANDOMLY;
+```
+
+### Appendoptimized table example
+You can use `appendopimized` or `appendonly`(legacy) to create appendoptimized table
 Such model definition
 
-```buildoutcfg
+```SQL
 {{
     config(
         materialized='table',
         distributed_by='id',
-        appendonly='true',
+        appendoptimized=true,
         orientation='column',
         compresstype='ZLIB',
         compresslevel=1,
@@ -79,10 +109,10 @@ from source_data
 
 will produce following sql code
 
-```buildoutcfg
+```SQL
 create  table "dvault"."dv"."my_first_dbt_model__dbt_tmp"
 with (
-    appendonly=true,
+    appendoptimized=true,
     blocksize=32768,
     orientation=column,
     compresstype=ZLIB,
@@ -121,7 +151,7 @@ To implement partitions into you dbt-model you need to specify on of the followi
 Let consider examples of definition model with partitions
 
  - using `raw_partition` parameter
-   ```buildoutcfg
+   ```SQL
    {% set fields_string %}
         id int4 null,
         incomingdate timestamp NULL
@@ -167,7 +197,7 @@ Let consider examples of definition model with partitions
    from source_data
    ```
    will produce following sql code
-   ```buildoutcfg
+   ```SQL
    create table if not exists "database"."schema"."my_first_dbt_model__dbt_tmp" (
        id int4 null,
        incomingdate timestamp NULL
@@ -207,7 +237,7 @@ Let consider examples of definition model with partitions
    alter table "database"."schema"."my_first_dbt_model__dbt_tmp" rename to "my_first_dbt_model";
    ```
  - Same result you can get using `partition_type`, `partition_column`, `partition_spec` parameters
-   ```buildoutcfg
+   ```SQL
    {% set fields_string %}
        id int4 null,
        incomingdate timestamp NULL
@@ -253,7 +283,7 @@ Let consider examples of definition model with partitions
    from source_data
    ```
  - also, you can use third way
-   ```buildoutcfg
+   ```SQL
    {% set fields_string %}
        id int4 null,
        incomingdate timestamp NULL
