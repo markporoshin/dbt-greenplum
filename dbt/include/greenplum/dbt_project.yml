@@ -1,5 +1,5 @@
 config-version: 2
 name: dbt_greenplum
-version: 1.0 #im usure if i need to change this? 
+version: 1.0
 
 macro-paths: ["macros"]
