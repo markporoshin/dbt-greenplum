@@ -26,8 +26,10 @@ Easiest way to start use dbt-greenplum is to install it using pip
 Where `<version>` is same as your dbt version
 
 Available versions:
- - 0.19.2 for dbt version 0.19.*
- - 1.0.4 for dbt version 1.0.4
+ - 0.19.2
+ - 1.0.4
+ - 1.2.0
+ - 1.4.0
 
 ## Supported Features
 
