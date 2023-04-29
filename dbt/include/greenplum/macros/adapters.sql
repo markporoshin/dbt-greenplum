@@ -59,6 +59,12 @@
       {{ distribution(distributed_by, distributed_replicated) }}
       ;
   {% endif %}
+
+  {% set contract_config = config.get('contract') %}
+  {% if contract_config.enforced %}
+     {{exceptions.warn("Model contracts cannot be enforced by dbt-greenplum!")}}
+  {% endif %}
+
 {%- endmacro %}
 
 

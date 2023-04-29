@@ -30,6 +30,7 @@ Available versions:
  - 1.0.4
  - 1.2.0
  - 1.4.0
+ - 1.5.0
 
 ## Supported Features
 
