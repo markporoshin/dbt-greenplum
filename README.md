@@ -30,28 +30,30 @@ Available versions:
  - 1.0.4
  - 1.2.0
  - 1.4.0
+ - 1.5.0
 
 ## Supported Features
 
-You can specify following preference 
- - starage type
+You can specify following settings:
+ - Storage type
    - heap
    - appendoptimized
- - distribution
+ - Distribution
    - `distributed randomly` by defaut
    - `distributed by (column, [ ... ] )` by setting up `distributed_by` parameter in the model config
- - table orientation
+   - `distributed replicated` by setting up `distributed_replicated=true` parameter in the model config
+ - Table orientation
    - `orientation=colum` by default
    - `orientation=row` by setting up `orientation` parameter in `row` in the model config
- - compress type, level and blocksize with default values
+ - Compress type, level and blocksize with default values
    ```bash
-    blocksize=32768,
     compresstype=ZLIB,
-    compresslevel=1
+    compresslevel=1,
+    blocksize=32768
    ``` 
     You can also specify `blocksize`, `compresstype`, `compresslevel` in the model config
- - appendonly|appendoptimized preference by default is `true`, also you can override it by setting up `appendoptimized` field in the model config
- - partitions (see "partition" chapter below)
+ - `appendoptimized` preference by default is `true`, also you can override it by setting up `appendoptimized` field in the model config
+ - Partitions (see "Partition" chapter below)
 
 ### Heap table example
 
@@ -177,7 +179,7 @@ Let consider examples of definition model with partitions
        config(
            materialized='table',
            distributed_by='id',
-           appendonly='true',
+           appendoptimized=true,
            orientation='column',
            compresstype='ZLIB',
            compresslevel=1,
@@ -208,7 +210,7 @@ Let consider examples of definition model with partitions
        incomingdate timestamp NULL
    )
    with (
-       appendonly=true,
+       appendoptimized=true,
        blocksize=32768,
        orientation=column,
        compresstype=ZLIB,
@@ -261,7 +263,7 @@ Let consider examples of definition model with partitions
        config(
            materialized='table',
            distributed_by='id',
-           appendonly='true',
+           appendoptimized=true,
            orientation='column',
            compresstype='ZLIB',
            compresslevel=1,
@@ -306,7 +308,7 @@ Let consider examples of definition model with partitions
        config(
            materialized='table',
            distributed_by='id',
-           appendonly='true',
+           appendoptimized=true,
            orientation='column',
            compresstype='ZLIB',
            compresslevel=1,
