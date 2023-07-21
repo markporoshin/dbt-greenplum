@@ -23,7 +23,7 @@
 
     select
       case when compresslevel is not null and compresstype is not null
-        then compresstype || ', ' || compresslevel
+        then 'encoding(' || compresstype || ', ' || compresslevel || ')'
       end as encoding_options
     from
       parsed_options
@@ -37,11 +37,9 @@
 
 {% macro parse_relation_encoding_params(relation) -%}
 
-  {% set params_raw = get_relation_encoding_params(relation) -%}
+  {% set encoding_params = get_relation_encoding_params(relation).rows[0][0] -%}
 
-  {% if params_raw.rows[0][0] is not none %}
-     {% set encoding_params = 'encoding(' + params_raw.rows[0][0] + ')' %}
-  {% else %}
+  {% if encoding_params is none %}
     {% set encoding_params = '' %}
   {% endif %}
 
