@@ -54,6 +54,8 @@ You can specify following settings:
     You can also specify `blocksize`, `compresstype`, `compresslevel` in the model config
  - `appendoptimized` preference by default is `true`, also you can override it by setting up `appendoptimized` field in the model config
  - Partitions (see "Partition" chapter below)
+ - Additional incremental strategy
+   - `truncate-insert` by setting up `incremental_strategy="truncate+insert"` parameter in the model config or `+incremental_strategy: truncate_insert` in the dbt_project.yml
 
 ### Heap table example
 
@@ -344,6 +346,25 @@ Too check generate sql script use `-d` option:
 `dbt -d run <...> -m <models>`
 
 If you want implement complex partition logic with subpartition or something else use `raw_partition` parameter
+
+### `Truncate+insert` incremental strategy
+
+You can use this incremental strategy to safely reload models without cascade dropping dependent objects due to Greenplum's transactional `TRUNCATE` operation realization  
+
+Model definition example:
+```SQL
+{{
+   config(
+      ...
+      materialized='incremental',
+      incremental_strategy='truncate+insert',
+      ...
+   )
+}}
+
+select *
+from source_data
+```
 
 ## Getting started
 
