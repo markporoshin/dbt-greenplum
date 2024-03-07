@@ -4,10 +4,9 @@
   {%- set distributed_replicated = config.get('distributed_replicated', default=false) -%}
   {%- set distributed_by = config.get('distributed_by', none) -%}
   {%- set appendonly = config.get('appendonly', default=true) -%}
-  {%- set appendoptimized = config.get('appendoptimized', default=appendonly) -%}
   {%- set orientation = config.get('orientation', default='column') -%}
-  {%- set compresstype = config.get('compresstype', default='ZSTD') -%}
-  {%- set compresslevel = config.get('compresslevel', default=4) -%}
+  {%- set compresstype = config.get('compresstype', default='ZLIB') -%}
+  {%- set compresslevel = config.get('compresslevel', default=1) -%}
   {%- set blocksize = config.get('blocksize', default=32768) -%}
 
   {% set partition_spec = config.get('partition_spec', none) %}
@@ -33,7 +32,7 @@
     create table if not exists {{ relation }} (
         {{ fields_string }}
     )
-    {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+    {{ storage_parameters(appendonly, blocksize, orientation, compresstype, compresslevel) }}
     {{ distribution(distributed_by, distributed_replicated) }}
     {{ partitions(raw_partition, partition_type, partition_column,
                   default_partition_name, partition_start, partition_end,
@@ -52,7 +51,7 @@
       {%- elif unlogged -%}
         unlogged
       {%- endif %} table {{ relation }}
-      {{ storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) }}
+      {{ storage_parameters(appendonly, blocksize, orientation, compresstype, compresslevel) }}
       as (
         {{ sql }}
       )
@@ -90,7 +89,12 @@
 
 
 {% macro greenplum__create_schema(relation) -%}
-  {{ return(postgres__create_schema(relation)) }}
+  {% if relation.database -%}
+    {{ adapter.verify_database(relation.database) }}
+  {%- endif -%}
+  {%- call statement('create_schema') -%}
+    create schema {{ relation.without_identifier().include(database=False) }}
+  {%- endcall -%}
 {% endmacro %}
 
 
@@ -104,9 +108,26 @@
 {% endmacro %}
 
 
-{% macro greenplum__list_relations_without_caching(relation) %}
-  {{ return(postgres__list_relations_without_caching(relation)) }}
-{%- endmacro %}
+{% macro greenplum__list_relations_without_caching(schema_relation) %}
+  {% call statement('list_relations_without_caching', fetch_result=True) -%}
+    select
+      '{{ schema_relation.database }}' as database,
+      tablename as name,
+      schemaname as schema,
+      'table' as type
+    from pg_tables
+    where schemaname ilike '{{ schema_relation.schema }}'
+    union all
+    select
+      '{{ schema_relation.database }}' as database,
+      viewname as name,
+      schemaname as schema,
+      'view' as type
+    from pg_views
+    where schemaname ilike '{{ schema_relation.schema }}'
+  {% endcall %}
+  {{ return(load_result('list_relations_without_caching').table) }}
+{% endmacro %}
 
 
 {% macro greenplum__list_schemas(database) %}

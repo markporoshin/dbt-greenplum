@@ -1,8 +1,8 @@
-{% macro storage_parameters(appendoptimized, blocksize, orientation, compresstype, compresslevel) %}
+{% macro storage_parameters(appendonly, blocksize, orientation, compresstype, compresslevel) %}
     {% set storage_parameters %}
         with (
-            appendoptimized={{ appendoptimized }}
-        {% if appendoptimized %}
+            appendonly={{ appendonly }}
+        {% if appendonly %}
             , blocksize={{ blocksize }}
             , compresstype={{ compresstype }}
             , compresslevel={{ compresslevel }}
